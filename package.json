@@ -6,22 +6,24 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"build": "tsc",
-	"prepare" : "npm run build",
-	"postversion" : "git push && git push --tags"
+    "build": "tsc",
+    "prepare": "npm run build",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yashanand1910/exxpress.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Yash Anand",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/yashanand1910/exxpress/issues"
   },
   "homepage": "https://github.com/yashanand1910/exxpress#readme",
-  "files": ["lib/**/*"],
+  "files": [
+    "lib/**/*"
+  ],
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^3.6.0",
     "@typescript-eslint/parser": "^3.6.0",
@@ -32,5 +34,8 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "typescript": "^3.9.6"
+  },
+  "dependencies": {
+    "@types/node": "^14.0.22"
   }
 }
