@@ -1,17 +1,33 @@
 import { MiddlewareMap, Middleware, Request } from './middleware';
-import { IncomingMessage, ServerResponse, RequestListener } from 'http';
+import { IncomingMessage, ServerResponse, createServer, Server } from 'http';
 import { getPiecesFromURL } from './helper';
 
-export function exxpress() {
-	const exxpressMain = new ExxpressMain();
+export function exxpress(): ExxpressServer {
+	const server = new ExxpressServer(new ExxpressMain());
 
-	return {}, (req, res) => {
-		exxpressMain.process(req, res);
-	};
+	return server;
+}
+
+export class ExxpressServer {
+	exxpressMain: ExxpressMain;
+	server: Server
+
+	constructor(exxpressMain: ExxpressMain) {
+		this.exxpressMain = exxpressMain;
+		this.server = createServer(this.exxpressMain.requestListener);
+	}
+
+	use(URL: string, middleware: Middleware): void {
+		this.exxpressMain.use(URL, middleware);
+	}
+
+	listen(port: number, callback: () => void): void {
+		this.server.listen(port, callback);
+	}
 }
 
 export class ExxpressMain {
-	private middlewareMap: MiddlewareMap;
+	middlewareMap: MiddlewareMap;
 
 	constructor() {
 		// Initialize middleware maps
@@ -21,7 +37,7 @@ export class ExxpressMain {
 		// TODO add default middlewares to the map here
 	}
 
-	process(request: IncomingMessage, response: ServerResponse): void {
+	requestListener = (request: IncomingMessage, response: ServerResponse): void => {
 		const middlewares = this.getMiddlewares(getPiecesFromURL(<string>request.url), [this.middlewareMap], request);
 		middlewares.forEach(middleware => {
 			middleware(request, response);
