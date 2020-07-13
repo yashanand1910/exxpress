@@ -4,6 +4,8 @@ import { Request } from './middleware';
 
 const app = exxpress();
 
+// app.use
+
 app.use('/', (req: Request, res: ServerResponse, next) => {
 	console.log(req.url);
 	res.write('Welcome BASE! \n');
@@ -38,6 +40,13 @@ app.use('/home/**/changelog', (req: Request, res: ServerResponse, next) => {
 	console.log('HOME - CHANGELOG');
 	res.write('HOME - CHANGELOG');
 	next();
+});
+
+// app.get
+
+app.get('/home', (req: Request, res: ServerResponse) => {
+	console.log(`GET ${req.url}`);
+	res.write('GET BASE! \n');
 });
 
 app.listen(3000, () => {

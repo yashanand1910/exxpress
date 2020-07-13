@@ -1,4 +1,4 @@
-import { MiddlewareMap, Middleware, Request } from './middleware';
+import { MiddlewareMap, Middleware, Request, RequestHandlers, defaultRequestHandler } from './middleware';
 import { IncomingMessage, ServerResponse, createServer, Server } from 'http';
 import { getPiecesFromURL } from './helper';
 
@@ -21,6 +21,10 @@ export class ExxpressServer {
 		this.exxpressMain.use(URL, middleware);
 	}
 
+	get(URL: string, middleware: Middleware): void {
+		this.exxpressMain.get(URL, middleware);
+	}
+
 	listen(port: number, callback: () => void): void {
 		this.server.listen(port, callback);
 	}
@@ -39,10 +43,21 @@ export class ExxpressMain {
 
 	requestListener = (request: IncomingMessage, response: ServerResponse): void => {
 		const middlewares = this.getMiddlewares(getPiecesFromURL(<string>request.url), [this.middlewareMap], request);
+		const requestHandlers = this.getRequestHandlers(getPiecesFromURL(<string>request.url), [this.middlewareMap], request);
 		
 		this.callMiddleware(middlewares, 0, request, response);
 
-		response.end();
+		switch (request.method) {
+		case 'GET':
+			requestHandlers?.get(request, response);
+			break;
+		case 'POST':
+			requestHandlers?.post(request, response);
+			break;
+		default:
+			defaultRequestHandler(request, response);
+			break;
+		}
 	}
 
 	callMiddleware = (middlewares: Middleware[], i: number, request: IncomingMessage, response: ServerResponse): void => {
@@ -85,6 +100,32 @@ export class ExxpressMain {
 		return middlewares;
 	}
 
+	getRequestHandlers(URLPieces: string[], middlewareMaps: MiddlewareMap[], request: Request): RequestHandlers | undefined {
+		for (let i = 0; i < middlewareMaps.length; i++) {
+			if (this.matchURLPieces(URLPieces[0], middlewareMaps[i].baseURL, request)) {
+				if (URLPieces.length === 1) {
+					return middlewareMaps[i].requestHandlers;
+				}
+				if (middlewareMaps[i].baseURL === '**') {
+					const baseURLs = [];
+					for (let j = 0; j < middlewareMaps[i].childMiddlewareMaps.length; j++) {
+						baseURLs.push(middlewareMaps[i].childMiddlewareMaps[j].baseURL);
+					}
+					for (let j = 1; j < URLPieces.length; j++) {
+						const index = baseURLs.indexOf(URLPieces[j]);
+						if (index > -1) {
+							const newURLPieces = URLPieces.slice(j, URLPieces.length);
+							return this.getRequestHandlers(newURLPieces, [middlewareMaps[i].childMiddlewareMaps[index]], request);
+						}
+					}
+				} else {
+					const newURLPieces = URLPieces.slice(1, URLPieces.length);
+					return this.getRequestHandlers(newURLPieces, middlewareMaps[i].childMiddlewareMaps, request);
+				}
+			}
+		}
+	}
+
 	matchURLPieces(URLPiece: string, StoredURLPiece: string, request: Request): boolean {
 		if (StoredURLPiece.startsWith(':')) {
 			if (!request.params) {
@@ -107,5 +148,13 @@ export class ExxpressMain {
 
 	use(URL: string, middleware: Middleware): void {
 		this.middlewareMap.addMiddleware(getPiecesFromURL(URL), middleware);
+	}
+
+	get(URL: string, middleware: Middleware): void {
+		this.middlewareMap.addMiddleware(getPiecesFromURL(URL), middleware, 'GET');
+	}
+
+	post(URL: string, middleware: Middleware): void {
+		this.middlewareMap.addMiddleware(getPiecesFromURL(URL), middleware, 'POST');
 	}
 }
