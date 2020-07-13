@@ -34,9 +34,7 @@ export class MiddlewareMap {
 	}
 }
 
-export interface Middleware {
-	(request: Request, response: ServerResponse): void
-}
+export type Middleware = (request: Request, response: ServerResponse, next: () => void) => void;
 
 export interface Request extends IncomingMessage{
 	params?: any;

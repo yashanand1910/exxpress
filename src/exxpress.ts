@@ -39,10 +39,17 @@ export class ExxpressMain {
 
 	requestListener = (request: IncomingMessage, response: ServerResponse): void => {
 		const middlewares = this.getMiddlewares(getPiecesFromURL(<string>request.url), [this.middlewareMap], request);
-		middlewares.forEach(middleware => {
-			middleware(request, response);
-		});
+		
+		this.callMiddleware(middlewares, 0, request, response);
+
 		response.end();
+	}
+
+	callMiddleware = (middlewares: Middleware[], i: number, request: IncomingMessage, response: ServerResponse): void => {
+		if (i >= middlewares.length) {
+			return;
+		}
+		middlewares[i](request, response, () => this.callMiddleware(middlewares, i + 1, request, response));
 	}
 
 	getMiddlewares(URLPieces: string[], middlewareMaps: MiddlewareMap[], request: Request): Middleware[] {
