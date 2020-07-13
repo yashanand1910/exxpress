@@ -55,26 +55,29 @@ export class ExxpressMain {
 	getMiddlewares(URLPieces: string[], middlewareMaps: MiddlewareMap[], request: Request): Middleware[] {
 		let middlewares: Middleware[] = [];
 
+		if (!URLPieces.length) {
+			return middlewares;
+		}
+
 		for (let i = 0; i < middlewareMaps.length; i++) {
-			if (this.processURLPieces(URLPieces[0], middlewareMaps[i].baseURL, request)) {
-				URLPieces.splice(0, 1);
+			if (this.matchURLPieces(URLPieces[0], middlewareMaps[i].baseURL, request)) {
 				middlewares = middlewares.concat(middlewareMaps[i].middlewares);
-				if (URLPieces.length) {
-					if (middlewareMaps[i].baseURL === '**') {
-						const baseURLs = [];
-						for (let j = 0; j < middlewareMaps[i].childMiddlewareMaps.length; j++) {
-							baseURLs.push(middlewareMaps[i].childMiddlewareMaps[j].baseURL);
-						}
-						for (let j = 0; j < URLPieces.length; j++) {
-							const index = baseURLs.indexOf(URLPieces[j]);
-							if (index > -1) {
-								middlewares = middlewares.concat(this.getMiddlewares(URLPieces.splice(0, j), [middlewareMaps[i].childMiddlewareMaps[index]], request));
-								break;
-							}
-						}
-					} else {
-						middlewares = middlewares.concat(this.getMiddlewares(URLPieces, middlewareMaps[i].childMiddlewareMaps, request));
+				if (middlewareMaps[i].baseURL === '**') {
+					const baseURLs = [];
+					for (let j = 0; j < middlewareMaps[i].childMiddlewareMaps.length; j++) {
+						baseURLs.push(middlewareMaps[i].childMiddlewareMaps[j].baseURL);
 					}
+					for (let j = 1; j < URLPieces.length; j++) {
+						const index = baseURLs.indexOf(URLPieces[j]);
+						if (index > -1) {
+							const newURLPieces = URLPieces.slice(j, URLPieces.length);
+							middlewares = middlewares.concat(this.getMiddlewares(newURLPieces, [middlewareMaps[i].childMiddlewareMaps[index]], request));
+							break;
+						}
+					}
+				} else {
+					const newURLPieces = URLPieces.slice(1, URLPieces.length);
+					middlewares = middlewares.concat(this.getMiddlewares(newURLPieces, middlewareMaps[i].childMiddlewareMaps, request));
 				}
 			}
 		}
@@ -82,7 +85,7 @@ export class ExxpressMain {
 		return middlewares;
 	}
 
-	processURLPieces(URLPiece: string, StoredURLPiece: string, request: Request): boolean {
+	matchURLPieces(URLPiece: string, StoredURLPiece: string, request: Request): boolean {
 		if (StoredURLPiece.startsWith(':')) {
 			if (!request.params) {
 				request.params = {};
