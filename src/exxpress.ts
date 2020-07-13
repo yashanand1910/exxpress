@@ -1,19 +1,24 @@
 import { MiddlewareMap, Middleware, Request } from './middleware';
-import { createServer, Server, IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse, RequestListener } from 'http';
 import { getPiecesFromURL } from './helper';
 
-export class Exxpress {
-	private server: Server;
+export function exxpress() {
+	const exxpressMain = new ExxpressMain();
+
+	return {}, (req, res) => {
+		exxpressMain.process(req, res);
+	};
+}
+
+export class ExxpressMain {
 	private middlewareMap: MiddlewareMap;
 
 	constructor() {
 		// Initialize middleware maps
 		this.middlewareMap = new MiddlewareMap();
 
-		// Create server
-		this.server = createServer((request, response) => {
-			this.process(request, response);
-		});
+		// TODO implement some default middlewares
+		// TODO add default middlewares to the map here
 	}
 
 	process(request: IncomingMessage, response: ServerResponse): void {
@@ -48,7 +53,6 @@ export class Exxpress {
 						middlewares = middlewares.concat(this.getMiddlewares(URLPieces, middlewareMaps[i].childMiddlewareMaps, request));
 					}
 				}
-				break;
 			}
 		}
 
@@ -65,13 +69,15 @@ export class Exxpress {
 		} else if (StoredURLPiece === '**') {
 			return true;
 		} else {
+			// TODO replace with proper regex match
 			return URLPiece === StoredURLPiece;
 		}
 	}
 
-	listen(port: number): void {
-		this.server.listen(port, (() => { console.log(`Listening on localhost:${port}...`); }));
-	}
+	/**
+	 * Middleware functions (GET, POST, USE)
+	 *
+	 * */
 
 	use(URL: string, middleware: Middleware): void {
 		this.middlewareMap.addMiddleware(getPiecesFromURL(URL), middleware);

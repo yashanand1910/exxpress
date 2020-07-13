@@ -1,7 +1,8 @@
-import { Exxpress } from './exxpress';
+import { exxpress } from './exxpress';
+import { createServer } from 'http';
 
-const app = new Exxpress();
-app.listen(3000);
+const app = exxpress();
+const server = createServer();
 
 app.use('/', (req, res) => {
 	console.log(req.url);
@@ -13,7 +14,6 @@ app.use('/home', (req, res) => {
 	res.write('HOME \n');
 });
 
-// Defining this before /home/:ID matters! Otherwise 'about' will be treated as a parameter
 app.use('/home/about', (req, res) => {
 	console.log('HOME - ABOUT');
 	res.write('HOME - ABOUTPAGE \n');
@@ -27,14 +27,4 @@ app.use('/home/:ID', (req, res) => {
 app.use('/home/:ID/about', (req, res) => {
 	console.log(`HOME - ${req.params['ID']} - ABOUT`);
 	res.write(`HOME - ${req.params['ID']} - ABOUT \n`);
-});
-
-app.use('/home/:ID/about/:var1-:var2/', (req, res) => {
-	console.log(`HOME - ${req.params['ID']} - ABOUT`);
-	res.write(`HOME - ${req.params['ID']} - ABOUT \n`);
-});
-
-app.use('/home/**/version', (req, res) => {
-	console.log('HOME - ** VERSION');
-	res.write('HOME - ** VERSION \n');
 });
